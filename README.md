@@ -13,4 +13,4 @@ A web application allowing a user to see the snowshoe trails and mountain huts i
 ![app-structure](https://user-images.githubusercontent.com/22935846/52141329-a7c08b00-2655-11e9-8470-73e7464b2126.png)
 
 ## Link to application
-[https://ancient-beyond-61046.herokuapp.com/] [https://ancient-beyond-61046.herokuapp.com/]
+https://ancient-beyond-61046.herokuapp.com/
