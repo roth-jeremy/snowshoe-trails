@@ -74,6 +74,22 @@ class SummitFeature
   }
 }
 
+class HutFeature
+{
+  var $type;
+  var $id;
+  var $properties;
+  var $hutName;
+  var $geometry;
+
+  function __construct($id, $hutName, $geometry){
+    $this->type = "Feature";
+    $this->id = $id;
+    $this->properties = array("Hut name" => $hutName);
+    $this->geometry = $geometry;
+  }
+}
+
 class FeatureCollection
 {
   var $type;

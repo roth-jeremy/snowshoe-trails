@@ -3,14 +3,22 @@ require_once 'GeoManager.php';
 
 // This is the URL end point to get the routes (it seems there are less then 200 routes)
 $url = "https://api.camptocamp.org/routes?a=14384&act=snowshoeing&pl=fr&limit=200";
+$urlHuts = "https://api.camptocamp.org/waypoints?a=14384&wtyp=hut&pl=fr&limit=200";
 $str_routes = file_get_contents($url);
+$str_routes_huts = file_get_contents($urlHuts);
+
 
 // The data result is JSON decoded because we know it JSON encoded
 $routes = json_decode($str_routes);
+$routesHuts = json_decode($str_routes_huts);
 
 // For each route in the $routes->documents table we extract the ID to request the details of the route
 foreach ($routes->documents as $doc){
     getRouteDetails($doc->document_id);
+}
+
+foreach ($routesHuts->documents as $doc){
+  getHutsDetails($doc->document_id);
 }
 
 // Given an ID, we extract the useful information we want to transfer in our geodatabase
@@ -65,6 +73,28 @@ function getRouteDetails($id) {
   }
 }
 
+function getHutsDetails($id) {
+  // This is the URL endpoint to get the details of the given route
+  $url = "https://api.camptocamp.org/waypoints/" . $id;
+  $str_route = file_get_contents($url);
+
+  // The data result is JSON decoded because we know it JSON encoded
+  $route = json_decode($str_route);
+
+  // We prepare the database connection
+  $conn = new Connection("host=ec2-23-21-244-254.compute-1.amazonaws.com port=5432 dbname=d6ibh7bqa237ga user=uztkmorlamgklq password=d3e72e14ea35339670a3beb428a9f863cf35464f3583e2fbd0830f7fb32d36e9");
+  
+  $hutName = $route->locales[0]->title;
+
+  // we extract especially the path of the route, but also there is always a representative point (may be it is the summit to reach)
+  $geom_point = $route->geometry->geom;
+
+  echo "<h1> Hut name :" . $hutName . "</h1>";
+  echo "<h3> geom_point : \n</h3>" . $geom_point;
+
+  insertHut($conn, $hutName, $geom_point);
+}
+
 // Given a ready to use DB connection and all information to insert, we prepare the query and run it
 function insertTrack($conn, $title, $difficulty, $altdiff, $description, $area, $geom_line) {
   // we define the query template
@@ -108,6 +138,28 @@ function insertSummit($conn, $highest_point, $geom_point) {
   // and we format the final string query (it is safe to pg_escape_string text content)
   $query = sprintf($format,
     $highest_point,
+    $geom_point
+  );
+  // just display it in the console
+  echo "<p><b>" . $query . "</b></p>";
+
+  // we run the query
+  $conn->insertQuery($query);
+}
+
+// Given a ready to use DB connection and all information to insert, we prepare the query and run it
+function insertHut($conn, $hutName, $geom_point) {
+  // we define the query template
+  // (see https://secure.php.net/manual/fr/function.sprintf.php)
+  $format = "INSERT INTO huts VALUES (
+      nextval('seq_hut_id'),
+      '%s',
+      ST_Transform(ST_Force3D(ST_SetSRID(ST_GeomFromGeoJSON('%s'), 3857)), 4326)
+    )";
+
+  // and we format the final string query (it is safe to pg_escape_string text content)
+  $query = sprintf($format,
+    pg_escape_string($hutName),
     $geom_point
   );
   // just display it in the console
