@@ -1,4 +1,4 @@
-#Snowshoe Trails
+# Snowshoe Trails
 
 A web application allowing a user to see the snowshoe trails and mountain huts in Valais, Switzerland
 
